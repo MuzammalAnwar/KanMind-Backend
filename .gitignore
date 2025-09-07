@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Django
+*.log
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+# If you use collectstatic to a different folder, ignore that folder instead of "staticfiles/"
+
+# Envs & secrets
+.env
+.env.*
+*.env
+settings_local.py
+
+# Virtual envs
+venv/
+.venv/
+env/
+myenv/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
