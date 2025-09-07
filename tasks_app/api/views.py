@@ -1,10 +1,12 @@
 from django.db.models import Count, Q
 from rest_framework import generics, permissions, mixins
 from kanban_app.models import Board
-from tasks_app.models import Task
-from .serializers import TasksAssignedToMeSerializer, TasksCreateSerializer, TaskDetailSerializer
+from tasks_app.models import Task, Comment
+from .serializers import TasksAssignedToMeSerializer, TasksCreateSerializer, TaskDetailSerializer, TaskDetailCommentsSerializer
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from kanban_app.api.permissions import IsBoardMember
+from django.shortcuts import get_object_or_404
+from .permissions import IsCommentAuthor
 
 
 class TasksAssignedToMeView(generics.ListAPIView):
@@ -70,6 +72,7 @@ class TaskCreateView(generics.CreateAPIView):
             raise ValidationError(errors)
         serializer.save()
 
+
 class TaskDetailView(mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
                      generics.GenericAPIView):
@@ -83,22 +86,18 @@ class TaskDetailView(mixins.UpdateModelMixin,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
-    
+
     def perform_update(self, serializer):
         instance = self.get_object()
-        # Target board after update (defaults to current if not provided)
         target_board = serializer.validated_data.get("board", instance.board)
-
-        # Authorization: only MEMBERS of the target board may update
         user = self.request.user
         if not target_board.members.filter(pk=user.pk).exists():
-            raise PermissionDenied("Only board members can update tasks on this board.")
-
-        # Effective participants after update
-        effective_assignee = serializer.validated_data.get("assignee", instance.assignee)
-        effective_reviewer = serializer.validated_data.get("reviewer", instance.reviewer)
-
-        # Validate membership of participants (if not None)
+            raise PermissionDenied(
+                "Only board members can update tasks on this board.")
+        effective_assignee = serializer.validated_data.get(
+            "assignee", instance.assignee)
+        effective_reviewer = serializer.validated_data.get(
+            "reviewer", instance.reviewer)
         member_ids = set(target_board.members.values_list("id", flat=True))
         errors = {}
         if effective_assignee and effective_assignee.id not in member_ids:
@@ -106,7 +105,36 @@ class TaskDetailView(mixins.UpdateModelMixin,
         if effective_reviewer and effective_reviewer.id not in member_ids:
             errors["reviewer_id"] = "Reviewer must be a member of the target board."
         if errors:
-            # Bad input → 400
             raise ValidationError(errors)
-
         serializer.save()
+
+
+class TaskDetailCommentsView(generics.ListCreateAPIView):
+    serializer_class = TaskDetailCommentsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_task(self):
+        task = get_object_or_404(Task, pk=self.kwargs["pk"])
+        user = self.request.user
+        board = task.board
+        is_member = board.members.filter(id=user.id).exists()
+        if not is_member:
+            raise PermissionDenied(
+                "Only board members can view or comment on this task.")
+        return task
+
+    def get_queryset(self):
+        return Comment.objects.filter(task=self.get_task()).select_related("author")
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, task=self.get_task())
+
+
+class TaskDetailCommentDeleteView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsCommentAuthor]
+    lookup_url_kwarg = "comment_id"
+    queryset = Comment.objects.all()
+
+    def get_queryset(self):
+        get_object_or_404(Task, pk=self.kwargs["task_id"])
+        return Comment.objects.filter(task_id=self.kwargs["task_id"])

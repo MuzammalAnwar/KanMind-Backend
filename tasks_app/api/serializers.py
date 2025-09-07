@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from kanban_app.models import Board
 from kanban_app.api.serializers import UserMiniSerializer
-from tasks_app.models import Task
+from tasks_app.models import Task, Comment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -70,7 +70,7 @@ class TasksCreateSerializer(serializers.ModelSerializer):
 
 class TaskDetailSerializer(TasksCreateSerializer):
     board = serializers.PrimaryKeyRelatedField(read_only=True)
-    
+
     class Meta:
         model = Task
         fields = [
@@ -87,3 +87,14 @@ class TaskDetailSerializer(TasksCreateSerializer):
             'due_date',
             'comments_count'
         ]
+
+
+class TaskDetailCommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'created_at', 'author', 'content']
+        
+    def get_author(self, obj):
+           return f"{obj.author.first_name} {obj.author.last_name}".strip()
