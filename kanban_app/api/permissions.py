@@ -7,7 +7,8 @@ class IsBoardOwnerOrMember(BasePermission):
         u = request.user
         if request.method in SAFE_METHODS:
             return obj.owner_id == u.id or obj.members.filter(pk=u.pk).exists()
-        return obj.owner_id == request.user.id
+        if request.method == 'PATCH' or request.method == 'DELETE':
+            return obj.owner_id == request.user.id or obj.members.filter(pk=u.pk).exists()
 
 
 class IsBoardOwnerOrReadOnly(BasePermission):
