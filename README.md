@@ -24,21 +24,21 @@ cd KanMind-Backend
 
 # 2) Virtualenv
 python -m venv .venv
+
 # Windows (PowerShell)
-. .\.venv\Scripts\Activate.ps1
-# macOS/Linux: source .venv/bin/activate
+venv\Scripts\Activate
+
+# macOS/Linux:
+source .venv/bin/activate
 
 # 3) Install
 pip install -r requirements.txt
 
-# 4) Environment
-# Create a .env in the project root with at least:
-
-# 5) Database
+# 4) Database
 python manage.py migrate
 python manage.py createsuperuser  # optional
 
-# 6) Run
+# 5) Run
 python manage.py runserver
 # http://127.0.0.1:8000/
 
