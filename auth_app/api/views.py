@@ -14,10 +14,15 @@ class RegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        allowed_fields = {"fullname", "email", "password", "repeated_password"}
+        received_fields = set(request.data.keys())
+        extra_fields = received_fields - allowed_fields
+        if extra_fields:
+            return Response(
+                {"error": f"Invalid fields in request: {', '.join(extra_fields)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         serializer = RegisterSerializer(data=request.data)
-
-        data = {}
-
         if serializer.is_valid():
             saved_account = serializer.save()
             token, created = Token.objects.get_or_create(user=saved_account)
@@ -28,7 +33,7 @@ class RegistrationView(APIView):
                 'token': token.key
             }
             return Response(data, status=status.HTTP_201_CREATED)
-        return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(ObtainAuthToken):
