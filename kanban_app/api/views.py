@@ -19,3 +19,5 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsBoardOwnerOrMember]
     serializer_class = BoardDetailSerializer
     queryset = Board.objects.all()
+    
+    

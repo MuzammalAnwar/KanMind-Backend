@@ -92,40 +92,66 @@ class TaskMiniSerializer(serializers.ModelSerializer):
 
 
 class BoardDetailSerializer(BoardSerializer):
+    # disable aggregated fields from parent
     member_count = None
     ticket_count = None
     tasks_to_do_count = None
     tasks_high_prio_count = None
 
+    # write members by ids, read members as objects
     members = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), many=True, required=False, write_only=True
     )
-
     members_data = UserMiniSerializer(
-        source='members', many=True, read_only=True)
+        source="members", many=True, read_only=True)
+
+    # add owner_data for PATCH response
+    owner_data = UserMiniSerializer(source="owner", read_only=True)
 
     tasks = TaskMiniSerializer(read_only=True, many=True)
 
     class Meta(BoardSerializer.Meta):
-        fields = ['id', 'title', 'owner_id',
-                  'members', 'tasks', 'members_data']
+        fields = [
+            "id",
+            "title",
+            "owner_id",      # default (non-PATCH) returns owner_id
+            "owner_data",    # only exposed on PATCH
+            "members",
+            "tasks",
+            "members_data",
+        ]
 
     def update(self, instance, validated_data):
-        instance.title = validated_data.get('title', instance.title)
+        instance.title = validated_data.get("title", instance.title)
         instance.save()
 
-        if 'members' in validated_data:
-            new_members = validated_data['members']
+        if "members" in validated_data:
+            new_members = validated_data["members"]
             instance.members.set(new_members)
 
         return instance
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        nested = data.pop("members_data", [])
+
+        # handle members: swap between 'members' and 'members_data'
+        members_nested = data.pop("members_data", [])
+        # handle owner: switch owner_id -> owner_data for PATCH only
+        owner_nested = data.pop("owner_data", None)
+
         req = self.context.get("request")
         if req and req.method.upper() == "PATCH":
-            data["members_data"] = nested
+            # For PATCH: return detailed members + detailed owner
+            data["members_data"] = members_nested
+            if owner_nested is not None:
+                data["owner_data"] = owner_nested
+            # Remove owner_id on PATCH
+            data.pop("owner_id", None)
+            data.pop("tasks", None)
         else:
-            data["members"] = nested
+            # For non-PATCH: keep owner_id and expose members as array of users (under 'members')
+            data["members"] = members_nested
+            # Ensure owner_data is not present on non-PATCH
+            data.pop("owner_data", None)
+
         return data
