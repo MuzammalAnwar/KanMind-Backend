@@ -58,6 +58,14 @@ class Task(models.Model):
     due_date = models.DateField(null=True, blank=True, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="created_tasks",
+        db_index=True,
+    )
 
     class Meta:
         ordering = ("-created_at",)

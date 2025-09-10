@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from rest_framework import status
 from rest_framework import generics, permissions, mixins
 from kanban_app.models import Board
 from tasks_app.models import Task, Comment
@@ -54,9 +55,16 @@ class TaskCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Task.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        board_id = request.data.get("board")
+        if board_id is not None:
+            get_object_or_404(Board, pk=board_id)
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         u = self.request.user
         board = serializer.validated_data["board"]
+        board = get_object_or_404(Board, pk=board.pk)
         if not board.members.filter(pk=u.pk).exists():
             raise PermissionDenied(
                 "Only board members can create tasks on this board.")
@@ -106,7 +114,18 @@ class TaskDetailView(mixins.UpdateModelMixin,
             errors["reviewer_id"] = "Reviewer must be a member of the target board."
         if errors:
             raise ValidationError(errors)
-        serializer.save()
+        serializer.save(created_by=u)
+        
+    def perform_destroy(self, instance):
+        user = self.request.user
+        is_board_owner = (instance.board.owner_id == user.id)
+        is_task_creator = (instance.created_by_id == user.id)
+
+        if not (is_board_owner or is_task_creator or user.is_superuser):
+            raise PermissionDenied(
+                "Only the board owner or the task creator can delete a task."
+            )
+        instance.delete()
 
 
 class TaskDetailCommentsView(generics.ListCreateAPIView):

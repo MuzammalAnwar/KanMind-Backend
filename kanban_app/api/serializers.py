@@ -133,25 +133,16 @@ class BoardDetailSerializer(BoardSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
-        # handle members: swap between 'members' and 'members_data'
         members_nested = data.pop("members_data", [])
-        # handle owner: switch owner_id -> owner_data for PATCH only
         owner_nested = data.pop("owner_data", None)
-
         req = self.context.get("request")
         if req and req.method.upper() == "PATCH":
-            # For PATCH: return detailed members + detailed owner
             data["members_data"] = members_nested
             if owner_nested is not None:
                 data["owner_data"] = owner_nested
-            # Remove owner_id on PATCH
             data.pop("owner_id", None)
             data.pop("tasks", None)
         else:
-            # For non-PATCH: keep owner_id and expose members as array of users (under 'members')
             data["members"] = members_nested
-            # Ensure owner_data is not present on non-PATCH
             data.pop("owner_data", None)
-
         return data
