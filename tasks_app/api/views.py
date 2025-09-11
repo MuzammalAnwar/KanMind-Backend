@@ -114,7 +114,7 @@ class TaskDetailView(mixins.UpdateModelMixin,
             errors["reviewer_id"] = "Reviewer must be a member of the target board."
         if errors:
             raise ValidationError(errors)
-        serializer.save(created_by=u)
+        serializer.save(created_by=user)
         
     def perform_destroy(self, instance):
         user = self.request.user
