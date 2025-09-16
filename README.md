@@ -17,28 +17,40 @@ Manages boards, tasks, and auth (token-based login via **email + password**).
 
 ## Quick Start
 
+### 1) Clone the repository
 ```bash
-# 1) Clone
 git clone https://github.com/MuzammalAnwar/KanMind-Backend.git
+```
 cd KanMind-Backend
 
-# 2) Virtualenv
+### 2) Create and activate a virtual environment
+```bash
 python -m venv .venv
+```
 
-# Windows (PowerShell)
+### Windows (PowerShell)
+```bash
 venv\Scripts\Activate
-
-# macOS/Linux:
+```
+### macOS/Linux:
+```bash
 source .venv/bin/activate
+```
 
-# 3) Install
+### 3) Install dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# 4) Database
+### 4) Apply database migrations
+```bash
 python manage.py migrate
 python manage.py createsuperuser  # optional
+```
 
-# 5) Run
+### 5) Run the development server
+```bash
 python manage.py runserver
 # http://127.0.0.1:8000/
+```
 
