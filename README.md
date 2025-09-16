@@ -21,8 +21,9 @@ Manages boards, tasks, and auth (token-based login via **email + password**).
 ```bash
 git clone https://github.com/MuzammalAnwar/KanMind-Backend.git
 ```
+```bash
 cd KanMind-Backend
-
+```
 ### 2) Create and activate a virtual environment
 ```bash
 python -m venv .venv
