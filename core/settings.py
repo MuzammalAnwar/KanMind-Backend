@@ -25,8 +25,9 @@ SECRET_KEY = 'django-insecure-ank6^^(^jwuc+0e&7g+tgd$-j+n!dqh-9v%!+3(klt5@j^e$vl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "kanmind-api.muzammal-anwar.at"]
 
+CSRF_TRUSTED_ORIGINS = ["https://kanmind-api.muzammal-anwar.at"]
 
 # Application definition
 
