@@ -3,6 +3,20 @@
 Django REST backend for **KanMind**.  
 Manages boards, tasks, and auth (token-based login via **email + password**).
 
+## Deployment
+
+The backend is deployed on a Google Cloud VM using the following stack:
+
+Gunicorn – WSGI server for running Django
+
+Nginx – reverse proxy handling client requests and SSL termination
+
+Supervisor – process manager to keep Gunicorn running
+
+Certbot (Let’s Encrypt) – automatic HTTPS certificates
+
+The Admin panel is accessible
+👉 [here](https://kanmind-api.muzammal-anwar.at/admin/)
 ---
 
 ## Tech Stack
